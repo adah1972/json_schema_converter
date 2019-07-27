@@ -96,7 +96,7 @@ Output with `./convert_schema.py -t mongo36 test.json`:
 ```json
 {
   "$jsonSchema": {
-    "type": "object",
+    "bsonType": "object",
     "required": [
       "_id",
       "name",
@@ -107,11 +107,11 @@ Output with `./convert_schema.py -t mongo36 test.json`:
         "bsonType": "objectId"
       },
       "name": {
-        "type": "string",
+        "bsonType": "string",
         "maxLength": 80
       },
       "gender": {
-        "type": "string",
+        "bsonType": "string",
         "enum": [
           "male",
           "female",
@@ -120,7 +120,7 @@ Output with `./convert_schema.py -t mongo36 test.json`:
         ]
       },
       "age": {
-        "type": "number"
+        "bsonType": "number"
       }
     },
     "additionalProperties": false
@@ -128,7 +128,7 @@ Output with `./convert_schema.py -t mongo36 test.json`:
 }
 ```
 
-(You can see that `"type": "objectId"` is changed to `"bsonType": "objectId"`, and the whole thing is wrapped in a `$jsonSchema` field for easy use with MongoDB.)
+(You can see that `"type"` is changed to `"bsonType"`&mdash;for consistency, although only necessary for types not present in standard JSON&mdash;and the whole thing is wrapped in a `$jsonSchema` field for easy use with MongoDB.)
 
 Output with `./convert_schema.py -t mongo32 test.json` (only basic support for this target type is implemented, as MongoDB 3.4 will soon reach its end of life):
 
@@ -232,7 +232,7 @@ The ‘mongo36’ output would be:
 {
   "properties": {
     "location": {
-      "type": "object",
+      "bsonType": "object",
       "required": [
         "type",
         "coordinates"
@@ -240,7 +240,7 @@ The ‘mongo36’ output would be:
       "additionalProperties": false,
       "properties": {
         "type": {
-          "type": "string",
+          "bsonType": "string",
           "enum": [
             "Point",
             "MultiPoint",
@@ -251,7 +251,7 @@ The ‘mongo36’ output would be:
           ]
         },
         "coordinates": {
-          "type": "array"
+          "bsonType": "array"
         }
       }
     }

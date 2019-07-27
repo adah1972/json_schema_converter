@@ -271,7 +271,9 @@ class Mongo36Converter(SchemaConverter):
                     raise
                 if not isinstance(v, dict) and 'type' in v:
                     raise RuntimeError('Wrong definition in type ' + k)
-                self.definitions[k] = {"type": v['type']}
+                self.definitions[k] = self.convert_type(v['type'],
+                                                        src_path + k,
+                                                        ['$definitions'])
 
     def convert_type(self, type_, src_path, obj_path):
         if not isinstance(type_, str):
@@ -279,9 +281,9 @@ class Mongo36Converter(SchemaConverter):
                 'Non-string type encountered when parsing ' + src_path)
         if type_ == 'integer':
             return {"bsonType": "int"}
-        if type_ in JSON_SCHEMA_TYPES:
-            return {"type": type_}
-        if type_ in MONGO_BSON_TYPES:
+        if type_ == 'boolean':
+            return {"bsonType": "bool"}
+        if type_ in JSON_SCHEMA_TYPES or type_ in MONGO_BSON_TYPES:
             return {"bsonType": type_}
         if type_ in self.definitions:
             return self.definitions[type_]
