@@ -130,7 +130,7 @@ Output with `./convert_schema.py -t mongo36 test.json`:
 
 (You can see that `"type": "objectId"` is changed to `"bsonType": "objectId"`, and the whole thing is wrapped in a `$jsonSchema` field for easy use with MongoDB.)
 
-Output with `./convert_schema.py -t mongo36 test.json` (only basic support for this target type is implemented, as MongoDB 3.4 will soon reach its end of life):
+Output with `./convert_schema.py -t mongo32 test.json` (only basic support for this target type is implemented, as MongoDB 3.4 will soon reach its end of life):
 
 ```json
 {
