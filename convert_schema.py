@@ -191,7 +191,21 @@ class SchemaConverter:
         """
         Generates the result.
         """
-        raise NotImplementedError('generate_result requires overriding')
+        if self._ready:
+            return
+        definitions = BUILTIN_DEFINITIONS.copy()
+        if 'definitions' in self.schema:
+            definitions.update(self.schema['definitions'])
+            del self.schema['definitions']
+        self.parse_definitions(definitions)
+        self.prepare_result()
+        self._ready = True
+
+    def parse_definitions(self, definitions: Dict[str, Any]):
+        raise NotImplementedError('parse_definitions requires overriding')
+
+    def prepare_result(self):
+        raise NotImplementedError('prepare_result requires overriding')
 
     def convert_object(self, object_, src_path, obj_path):
         """
@@ -328,21 +342,17 @@ class Draft4Converter(SchemaConverter):
         self.type_dependencies: Dict[str, Set[str]] = {}
         self.used_types = set()
 
-    def generate_result(self):
-        if self._ready:
-            return
-        self.definitions = BUILTIN_DEFINITIONS.copy()
-        if 'definitions' in self.schema:
-            self.definitions.update(self.schema['definitions'])
-            del self.schema['definitions']
+    def parse_definitions(self, definitions: Dict[str, Any]):
+        self.definitions = definitions
         self.definitions = self.convert_inner_type(
             self.definitions, '/definitions', ['$definitions'])
+
+    def prepare_result(self):
         result = self.convert_object(self.schema, '/', [])
         self.remove_unused_definitions()
         if self.definitions:
             self._result['definitions'] = self.definitions
         self._result.update(result)
-        self._ready = True
 
     def convert_type(self, type_, src_path, obj_path):
         if not isinstance(type_, str):
@@ -389,17 +399,9 @@ class Mongo36Converter(SchemaConverter):
     This converter maps a type to bsonType wherever possible, and will
     expand definitions on the result.
     """
-    def generate_result(self):
-        if self._ready:
-            return
-        definitions = BUILTIN_DEFINITIONS.copy()
-        if 'definitions' in self.schema:
-            definitions.update(self.schema['definitions'])
-            del self.schema['definitions']
-        self.parse_definitions(definitions)
+    def prepare_result(self):
         result = self.convert_object(self.schema, '/', [])
         self._result['$jsonSchema'] = result
-        self._ready = True
 
     def parse_definitions(self, definitions: Dict[str, Any]):
         assert isinstance(definitions, dict)
@@ -442,17 +444,9 @@ class Mongo32Converter(Mongo36Converter):
     This converter is only a minimal implementation, as pre-3.6 MongoDB
     will reach the end of its life by 2020.
     """
-    def generate_result(self):
-        if self._ready:
-            return
-        definitions = BUILTIN_DEFINITIONS.copy()
-        if 'definitions' in self.schema:
-            definitions.update(self.schema['definitions'])
-            del self.schema['definitions']
-        self.parse_definitions(definitions)
+    def prepare_result(self):
         result = self.convert_object(self.schema, '/', [])
         self.flatten_result(result)
-        self._ready = True
 
     def flatten_result(self, result: Dict[str, Any]):
         Mongo32Converter._flatten_recursively(result, self._result, [])
