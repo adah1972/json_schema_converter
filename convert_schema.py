@@ -472,9 +472,6 @@ class Mongo32Converter(Mongo36Converter):
             if 'bsonType' in result:
                 flattened_result[stringized_path]['$type'] = result['bsonType']
                 need_exists = False
-            elif 'type' in result:
-                flattened_result[stringized_path]['$type'] = result['type']
-                need_exists = False
             if 'pattern' in result:
                 flattened_result[stringized_path]['$regex'] = result['pattern']
                 need_exists = False
