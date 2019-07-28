@@ -149,9 +149,9 @@ class SchemaConverter:
         the schema to be converted (it might be changed)
     definitions : dict
         type definitions (both built-in and from the input)
-    result : dict
+    _result : dict
         the result after the conversion
-    ready : bool
+    _ready : bool
         whether the result is ready
     """
     def __init__(self, schema, make_copy=True):
@@ -170,10 +170,11 @@ class SchemaConverter:
         else:
             self.schema = schema
         self.definitions: Dict[str, Any] = {}
-        self.result: Dict[str, Any] = {}
-        self.ready = False
+        self._result: Dict[str, Any] = {}
+        self._ready = False
 
-    def get_result(self):
+    @property
+    def result(self):
         """
         Gets the result.
 
@@ -182,9 +183,9 @@ class SchemaConverter:
         Dict[str, Any]
             the converted result
         """
-        if not self.ready:
+        if not self._ready:
             self.generate_result()
-        return self.result
+        return self._result
 
     def generate_result(self):
         """
@@ -316,19 +317,19 @@ class Draft4Converter(SchemaConverter):
     ----------
     type_dependencies : Dict[str, Set[str]]
         key is the type name, and value is a list of dependent types
-    used_types : set
+    used_types : Set[str]
         set of used types
     """
     def __init__(self, schema, make_copy=True):
         super().__init__(schema, make_copy)
-        self.result: Dict[str, Any] = {
+        self._result: Dict[str, Any] = {
             "$schema": "http://json-schema.org/draft-04/schema#"
         }
         self.type_dependencies: Dict[str, Set[str]] = {}
         self.used_types = set()
 
     def generate_result(self):
-        if self.ready:
+        if self._ready:
             return
         self.definitions = BUILTIN_DEFINITIONS.copy()
         if 'definitions' in self.schema:
@@ -339,9 +340,9 @@ class Draft4Converter(SchemaConverter):
         result = self.convert_object(self.schema, '/', [])
         self.remove_unused_definitions()
         if self.definitions:
-            self.result['definitions'] = self.definitions
-        self.result.update(result)
-        self.ready = True
+            self._result['definitions'] = self.definitions
+        self._result.update(result)
+        self._ready = True
 
     def convert_type(self, type_, src_path, obj_path):
         if not isinstance(type_, str):
@@ -389,7 +390,7 @@ class Mongo36Converter(SchemaConverter):
     expand definitions on the result.
     """
     def generate_result(self):
-        if self.ready:
+        if self._ready:
             return
         definitions = BUILTIN_DEFINITIONS.copy()
         if 'definitions' in self.schema:
@@ -397,8 +398,8 @@ class Mongo36Converter(SchemaConverter):
             del self.schema['definitions']
         self.parse_definitions(definitions)
         result = self.convert_object(self.schema, '/', [])
-        self.result['$jsonSchema'] = result
-        self.ready = True
+        self._result['$jsonSchema'] = result
+        self._ready = True
 
     def parse_definitions(self, definitions: Dict[str, Any]):
         assert isinstance(definitions, dict)
@@ -442,7 +443,7 @@ class Mongo32Converter(Mongo36Converter):
     will reach the end of its life by 2020.
     """
     def generate_result(self):
-        if self.ready:
+        if self._ready:
             return
         definitions = BUILTIN_DEFINITIONS.copy()
         if 'definitions' in self.schema:
@@ -451,10 +452,10 @@ class Mongo32Converter(Mongo36Converter):
         self.parse_definitions(definitions)
         result = self.convert_object(self.schema, '/', [])
         self.flatten_result(result)
-        self.ready = True
+        self._ready = True
 
     def flatten_result(self, result: Dict[str, Any]):
-        Mongo32Converter._flatten_recursively(result, self.result, [])
+        Mongo32Converter._flatten_recursively(result, self._result, [])
 
     @staticmethod
     def _flatten_recursively(result: Dict[str, Any],
@@ -500,7 +501,7 @@ def convert_schema(in_file: TextIO, out_file: TextIO, target_type: str):
         converter = class_table[target_type](schema, make_copy=False)
     except KeyError:
         raise RuntimeError('Unrecognized target type ' + target_type)
-    result = converter.get_result()
+    result = converter.result
     json.dump(result, out_file, ensure_ascii=False, indent=2)
     print('')
 
