@@ -23,6 +23,7 @@ import copy
 import getopt
 import json
 import sys
+from typing import Any, Dict, List, Set, TextIO
 
 
 JSON_SCHEMA_TYPES = [
@@ -115,30 +116,100 @@ BUILTIN_DEFINITIONS = {
 
 
 class UnknownTypeError(RuntimeError):
+    """
+    Type for the unknown type error.
+
+    Attributes
+    ----------
+    type_name : str
+        the name of the unknown type
+    """
     def __init__(self, msg, type_name):
+        """
+        Constructs an UnknownTypeError object.
+
+        Parameters
+        ----------
+        msg : str
+            message to be passed to RuntimeError
+        type_name : str
+            the name of the unknown type
+        """
         super().__init__(msg)
         self.type_name = type_name
 
 
 class SchemaConverter:
+    """
+    Class for a generic JSON Schema converter.
+
+    Attributes
+    ----------
+    schema : dict
+        the schema to be converted (it might be changed)
+    definitions : dict
+        type definitions (both built-in and from the input)
+    result : dict
+        the result after the conversion
+    ready : bool
+        whether the result is ready
+    """
     def __init__(self, schema, make_copy=True):
+        """
+        Constructs a SchemaConverter.
+
+        Parameters
+        ----------
+        schema : dict
+            the input schema
+        make_copy : bool
+            whether to make a copy of the schema (as it may be changed)
+        """
         if make_copy:
             self.schema = copy.deepcopy(schema)
         else:
             self.schema = schema
-        self.definitions = {}
-        self.result = {}
+        self.definitions: Dict[str, Any] = {}
+        self.result: Dict[str, Any] = {}
         self.ready = False
 
     def get_result(self):
+        """
+        Gets the result.
+
+        Returns
+        -------
+        Dict[str, Any]
+            the converted result
+        """
         if not self.ready:
             self.generate_result()
         return self.result
 
     def generate_result(self):
+        """
+        Generates the result.
+        """
         raise NotImplementedError('generate_result requires overriding')
 
     def convert_object(self, object_, src_path, obj_path):
+        """
+        Converts an object in a JSON schema.
+
+        Parameters
+        ----------
+        object_ : dict
+            the object to be converted
+        src_path : str
+            the slash-separated path of the source JSON
+        obj_path : List[str]
+            the node path of the JSON to be validated
+
+        Returns
+        -------
+        Dict[str, Any]
+            the converted result
+        """
         if not isinstance(object_, dict):
             raise RuntimeError(
                 'Non-object type encountered when parsing ' + src_path)
@@ -159,6 +230,23 @@ class SchemaConverter:
         return result
 
     def convert_array(self, array, src_path, obj_path):
+        """
+        Converts an array in a JSON schema.
+
+        Parameters
+        ----------
+        array : List[dict]
+            the array to be converted
+        src_path : str
+            the slash-separated path of the source JSON
+        obj_path : List[str]
+            the node path of the JSON to be validated
+
+        Returns
+        -------
+        List[Dict[str, Any]]
+            the converted result
+        """
         if not isinstance(array, list):
             raise RuntimeError(
                 'Non-array type encountered when parsing ' + src_path)
@@ -169,6 +257,23 @@ class SchemaConverter:
         return result
 
     def convert_inner_type(self, object_, src_path, obj_path):
+        """
+        Converts the inner layer of an object in a JSON schema.
+
+        Parameters
+        ----------
+        object_ : dict
+            the object to be converted
+        src_path : str
+            the slash-separated path of the source JSON
+        obj_path : List[str]
+            the node path of the JSON to be validated
+
+        Returns
+        -------
+        Dict[str, Any]
+            the converted result
+        """
         if not isinstance(object_, dict):
             raise RuntimeError(
                 'Non-object type encountered when parsing ' + src_path)
@@ -180,16 +285,46 @@ class SchemaConverter:
         return result
 
     def convert_type(self, type_, src_path, obj_path):
+        """
+        Converts a type in a JSON schema.
+
+        Parameters
+        ----------
+        type_ : dict
+            the type to be converted
+        src_path : str
+            the slash-separated path of the source JSON
+        obj_path : List[str]
+            the node path of the JSON to be validated
+
+        Returns
+        -------
+        Dict[str, Any]
+            the converted result
+        """
         raise NotImplementedError('convert_type requires overriding')
 
 
 class Draft4Converter(SchemaConverter):
+    """
+    Class for a JSON Schema Draft 4 converter.
+
+    The parameter obj_path is mainly only used in this converter for
+    the recording of type usage.
+
+    Attributes
+    ----------
+    type_dependencies : Dict[str, Set[str]]
+        key is the type name, and value is a list of dependent types
+    used_types : set
+        set of used types
+    """
     def __init__(self, schema, make_copy=True):
         super().__init__(schema, make_copy)
-        self.result = {
+        self.result: Dict[str, Any] = {
             "$schema": "http://json-schema.org/draft-04/schema#"
         }
-        self.type_dependencies = {}
+        self.type_dependencies: Dict[str, Set[str]] = {}
         self.used_types = set()
 
     def generate_result(self):
@@ -223,7 +358,7 @@ class Draft4Converter(SchemaConverter):
             'Unrecognized type "{}" encountered when parsing {}'.format(
                 type_, src_path), type_)
 
-    def record_dependency(self, type_, obj_path):
+    def record_dependency(self, type_: str, obj_path: List[str]):
         if obj_path and obj_path[0] == '$definitions':
             depender = obj_path[1]
             self.type_dependencies.setdefault(depender, set())
@@ -232,7 +367,7 @@ class Draft4Converter(SchemaConverter):
         else:
             self.record_type_usage(type_)
 
-    def record_type_usage(self, type_):
+    def record_type_usage(self, type_: str):
         if type_ not in self.used_types:
             if type_ in self.type_dependencies:
                 for dependee_type in self.type_dependencies[type_]:
@@ -247,6 +382,12 @@ class Draft4Converter(SchemaConverter):
 
 
 class Mongo36Converter(SchemaConverter):
+    """
+    Class for a schema converter that is compatible with MongoDB 3.6.
+
+    This converter maps a type to bsonType wherever possible, and will
+    expand definitions on the result.
+    """
     def generate_result(self):
         if self.ready:
             return
@@ -259,7 +400,7 @@ class Mongo36Converter(SchemaConverter):
         self.result['$jsonSchema'] = result
         self.ready = True
 
-    def parse_definitions(self, definitions):
+    def parse_definitions(self, definitions: Dict[str, Any]):
         assert isinstance(definitions, dict)
         src_path = '/definitions/'
         for k, v in definitions.items():
@@ -294,6 +435,12 @@ class Mongo36Converter(SchemaConverter):
 
 
 class Mongo32Converter(Mongo36Converter):
+    """
+    Class for a schema converter that is compatible with MongoDB 3.2.
+
+    This converter is only a minimal implementation, as pre-3.6 MongoDB
+    will reach the end of its life by 2020.
+    """
     def generate_result(self):
         if self.ready:
             return
@@ -308,12 +455,14 @@ class Mongo32Converter(Mongo36Converter):
         self.flatten_result(result)
         self.ready = True
 
-    def flatten_result(self, result):
+    def flatten_result(self, result: Dict[str, Any]):
         Mongo32Converter._flatten_recursively(result, self.result, [])
 
     @staticmethod
-    def _flatten_recursively(result, flattened_result, obj_path):
-        required_properties = result.get('required', [])
+    def _flatten_recursively(result: Dict[str, Any],
+                             flattened_result: Dict[str, Dict[str, Any]],
+                             obj_path: List[str]):
+        required_properties: List[str] = result.get('required', [])
         for item in required_properties:
             stringized_path = '.'.join(obj_path + [item])
             flattened_result.setdefault(stringized_path, {})
@@ -344,7 +493,7 @@ class Mongo32Converter(Mongo36Converter):
                         v, flattened_result, obj_path + [k])
 
 
-def convert_schema(in_file, out_file, target_type):
+def convert_schema(in_file: TextIO, out_file: TextIO, target_type: str):
     schema = json.load(in_file)
     class_table = {
         "draft4": Draft4Converter,
