@@ -449,8 +449,6 @@ class Mongo32Converter(Mongo36Converter):
             definitions.update(self.schema['definitions'])
             del self.schema['definitions']
         self.parse_definitions(definitions)
-        self.definitions = self.convert_inner_type(
-            definitions, '/definitions', ['definitions'])
         result = self.convert_object(self.schema, '/', [])
         self.flatten_result(result)
         self.ready = True
