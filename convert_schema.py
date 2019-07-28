@@ -189,7 +189,7 @@ class SchemaConverter:
 
     def generate_result(self):
         """
-        Generates the result.
+        Generates the result if it is not yet ready.
         """
         if self._ready:
             return
@@ -197,14 +197,25 @@ class SchemaConverter:
         if 'definitions' in self.schema:
             definitions.update(self.schema['definitions'])
             del self.schema['definitions']
-        self.parse_definitions(definitions)
+        self.process_definitions(definitions)
         self.prepare_result()
         self._ready = True
 
-    def parse_definitions(self, definitions: Dict[str, Any]):
-        raise NotImplementedError('parse_definitions requires overriding')
+    def process_definitions(self, definitions) -> None:
+        """
+        Processes the definitions.
 
-    def prepare_result(self):
+        Parameters
+        ----------
+        definitions : Dict[str, Any]
+            the definitions to process
+        """
+        raise NotImplementedError('process_definitions requires overriding')
+
+    def prepare_result(self) -> None:
+        """
+        Prepares the result.
+        """
         raise NotImplementedError('prepare_result requires overriding')
 
     def convert_object(self, object_, src_path, obj_path):
@@ -342,7 +353,7 @@ class Draft4Converter(SchemaConverter):
         self.type_dependencies: Dict[str, Set[str]] = {}
         self.used_types = set()
 
-    def parse_definitions(self, definitions: Dict[str, Any]):
+    def process_definitions(self, definitions: Dict[str, Any]):
         self.definitions = definitions
         self.definitions = self.convert_inner_type(
             self.definitions, '/definitions', ['$definitions'])
@@ -399,11 +410,7 @@ class Mongo36Converter(SchemaConverter):
     This converter maps a type to bsonType wherever possible, and will
     expand definitions on the result.
     """
-    def prepare_result(self):
-        result = self.convert_object(self.schema, '/', [])
-        self._result['$jsonSchema'] = result
-
-    def parse_definitions(self, definitions: Dict[str, Any]):
+    def process_definitions(self, definitions: Dict[str, Any]):
         assert isinstance(definitions, dict)
         src_path = '/definitions/'
         for k, v in definitions.items():
@@ -418,6 +425,10 @@ class Mongo36Converter(SchemaConverter):
                 self.definitions[k] = self.convert_type(v['type'],
                                                         src_path + k,
                                                         ['$definitions'])
+
+    def prepare_result(self):
+        result = self.convert_object(self.schema, '/', [])
+        self._result['$jsonSchema'] = result
 
     def convert_type(self, type_, src_path, obj_path):
         if not isinstance(type_, str):
