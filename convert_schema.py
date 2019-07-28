@@ -121,7 +121,7 @@ class UnknownTypeError(RuntimeError):
 
 
 class SchemaConverter:
-    def __init__(self, schema, make_copy=False):
+    def __init__(self, schema, make_copy=True):
         if make_copy:
             self.schema = copy.deepcopy(schema)
         else:
@@ -184,7 +184,7 @@ class SchemaConverter:
 
 
 class Draft4Converter(SchemaConverter):
-    def __init__(self, schema, make_copy=False):
+    def __init__(self, schema, make_copy=True):
         super().__init__(schema, make_copy)
         self.result = {
             "$schema": "http://json-schema.org/draft-04/schema#"
@@ -352,7 +352,8 @@ def convert_schema(in_file, out_file, target_type):
         "mongo36": Mongo36Converter,
     }
     try:
-        converter = class_table[target_type](schema)
+        # No need to make a copy, as `schema` will be discarded soon.
+        converter = class_table[target_type](schema, make_copy=False)
     except KeyError:
         raise RuntimeError('Unrecognized target type ' + target_type)
     result = converter.get_result()
