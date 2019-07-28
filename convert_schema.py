@@ -283,8 +283,9 @@ class Mongo36Converter(SchemaConverter):
             return {"bsonType": "int"}
         if type_ == 'boolean':
             return {"bsonType": "bool"}
-        if type_ in JSON_SCHEMA_TYPES or type_ in MONGO_BSON_TYPES:
+        if type_ in MONGO_BSON_TYPES:
             return {"bsonType": type_}
+        assert type_ not in JSON_SCHEMA_TYPES
         if type_ in self.definitions:
             return self.definitions[type_]
         raise UnknownTypeError(
