@@ -110,9 +110,9 @@ be omitted, as it is the default):
 ```
 
 (You can see that `"type": "objectId"` is changed to `"$ref":
-"#/definitions/objectId"`, and a definition of `objectId`—included
-in my script—is generated automatically. Of course, you can add
-your own definitions too.)
+"#/definitions/objectId"`, and a definition of `objectId` — included in
+my script — is generated automatically. Of course, you can add your own
+definitions too.)
 
 ---
 
@@ -153,8 +153,8 @@ Output with `./convert_schema.py -t mongo36 test.json`:
 }
 ```
 
-(You can see that `"type"` is changed to `"bsonType"`—for consistency,
-although only necessary for types not present in standard JSON—and the
+(You can see that `"type"` is changed to `"bsonType"` — for consistency,
+although only necessary for types not present in standard JSON — and the
 whole thing is wrapped in a `$jsonSchema` field for easy use with
 MongoDB.)
 
