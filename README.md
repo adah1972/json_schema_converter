@@ -2,11 +2,11 @@
 
 ## Problems
 
-[JSON Schema](https://json-schema.org/) provides a useful way to validate JSON data. However, [MongoDB](https://www.mongodb.com/) supports only a subset of JSON Schema specification draft 4. Specifically, [definitions and references are left out](https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/#json-schema-omission) (as of 28 July 2019). MongoDB 3.2 and 3.4 does not even support JSON Schema, but only a [MongoDB-proprietary validation method](https://docs.mongodb.com/v3.2/core/document-validation/). Besides, [MongoDB has a richer type system than JSON Schema](https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types) . . . .
+[JSON Schema](https://json-schema.org/) provides a useful way to validate JSON data. However, [MongoDB](https://www.mongodb.com/) supports only a subset of JSON Schema specification draft 4. Specifically, [definitions and references are left out](https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/#json-schema-omission) (as of 28 July 2019). MongoDB 3.2 and 3.4 does not even support JSON Schema, but only a [MongoDB-proprietary validation method](https://docs.mongodb.com/v3.2/core/document-validation/). Besides, [MongoDB has a richer type system than JSON Schema](https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types). . . .
 
 ## Solution
 
-### Same input, multiple outputs
+### One input, multiple outputs
 
 My decision is that all my schemas should take the same format, but can be converted to serve different purposes. I also decide that all types should be treated equally, so a custom type will be referenced simply as `"type": "MyType"`, instead of `"$ref": "…"` (or `"bsonType": "…"`, as MongoDB requires). Apart from that, the input format conforms to JSON Schema (draft 4). This will allow people to write simply `"type": "objectId"` when the MongoDB BSON type ObjectId is intended.
 
@@ -38,7 +38,9 @@ An input (assume it is named *test.json*):
 }
 ```
 
-Output with `./convert_schema.py -t draft4 test.json`:
+---
+
+Output with `./convert_schema.py -t draft4 test.json` (`-t draft4` can be omitted, as it is the default):
 
 ```json
 {
@@ -91,6 +93,8 @@ Output with `./convert_schema.py -t draft4 test.json`:
 
 (You can see that `"type": "objectId"` is changed to `"$ref": "#/definitions/objectId"`, and a definition of `objectId`&mdash;included in my script&mdash;is generated automatically. Of course, you can add your own definitions too.)
 
+---
+
 Output with `./convert_schema.py -t mongo36 test.json`:
 
 ```json
@@ -129,6 +133,8 @@ Output with `./convert_schema.py -t mongo36 test.json`:
 ```
 
 (You can see that `"type"` is changed to `"bsonType"`&mdash;for consistency, although only necessary for types not present in standard JSON&mdash;and the whole thing is wrapped in a `$jsonSchema` field for easy use with MongoDB.)
+
+---
 
 Output with `./convert_schema.py -t mongo32 test.json` (only basic support for this target type is implemented, as MongoDB 3.4 will soon reach its end of life):
 
