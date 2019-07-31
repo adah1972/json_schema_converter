@@ -53,30 +53,29 @@ BUILTIN_DEFINITIONS = {
     "objectId": {
         "type": "object",
         "required": ["$oid"],
-        "additionalProperties": False,
         "properties": {
             "$oid": {
                 "type": "string",
                 "pattern": "^[0-9A-Fa-f]{24}$"
             }
-        }
+        },
+        "additionalProperties": False
     },
     "date": {
         "type": "object",
         "required": ["$date"],
-        "additionalProperties": False,
         "properties": {
             "$date": {
                 "type": "string",
                 "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
                            "T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"
             }
-        }
+        },
+        "additionalProperties": False
     },
     "binData": {
         "type": "object",
         "required": ["$binary", "$type"],
-        "additionalProperties": False,
         "properties": {
             "$binary": {
                 "type": "string",
@@ -86,7 +85,8 @@ BUILTIN_DEFINITIONS = {
                 "type": "string",
                 "pattern": "^[0-9A-Za-z]{1,2}$"
             }
-        }
+        },
+        "additionalProperties": False
     },
     "coordinates": {
         "type": "array",
@@ -100,7 +100,6 @@ BUILTIN_DEFINITIONS = {
     "geoJson": {
         "type": "object",
         "required": ["type", "coordinates"],
-        "additionalProperties": False,
         "properties": {
             "type": {
                 "type": "string",
@@ -109,7 +108,8 @@ BUILTIN_DEFINITIONS = {
                          "Polygon", "MultiPolygon"]
             },
             "coordinates": {"type": "coordinates"}
-        }
+        },
+        "additionalProperties": False
     }
 }
 
