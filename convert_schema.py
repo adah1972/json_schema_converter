@@ -19,7 +19,6 @@
 # 3. This notice may not be removed or altered from any source
 #    distribution.
 
-import copy
 import getopt
 import json
 import sys
@@ -168,7 +167,7 @@ class SchemaConverter:
             whether to make a copy of the schema (as it may be changed)
         """
         if make_copy:
-            self.schema = copy.deepcopy(schema)
+            self.schema = schema.copy()
         else:
             self.schema = schema
         self.definitions: Dict[str, Any] = {}
