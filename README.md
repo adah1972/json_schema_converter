@@ -332,8 +332,8 @@ example:
 
 With these definitions, a `binaryData` type can validate against a
 string like `"data:image/png;base64, …"` as JSON input, but also
-validate against an object containing a `media_type` tag as well as well
-as real binary `data` stored in MongoDB.
+validate against an object containing a `media_type` tag as well as real
+binary `data` stored in MongoDB.
 
 [6]: https://en.wikipedia.org/wiki/Data_URI_scheme
 
