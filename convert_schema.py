@@ -525,7 +525,7 @@ def usage():
     print('Usage: {} [options] [input file]'.format(sys.argv[0]))
     print("""
 Options
-  -h, --help              Show this message and exit')
+  -h, --help              Show this message and exit
   -t, --type TARGET_TYPE  Specify the target type, possible values being
                           draft4 (default), mongo32, and mongo36
 
