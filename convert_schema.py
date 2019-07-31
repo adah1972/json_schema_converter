@@ -153,8 +153,10 @@ class SchemaConverter:
         the result after the conversion
     _ready : bool
         whether the result is ready
+    _type : str
+        type of the converter (for alternative definitions)
     """
-    def __init__(self, schema, make_copy=True):
+    def __init__(self, schema, make_copy=True, type_=None):
         """
         Constructs a SchemaConverter.
 
@@ -172,6 +174,7 @@ class SchemaConverter:
         self.definitions: Dict[str, Any] = {}
         self._result: Dict[str, Any] = {}
         self._ready = False
+        self._type = type_
 
     @property
     def result(self):
@@ -197,6 +200,10 @@ class SchemaConverter:
         if 'definitions' in self.schema:
             definitions.update(self.schema['definitions'])
             del self.schema['definitions']
+        if 'alt_definitions' in self.schema:
+            if self._type in self.schema['alt_definitions']:
+                definitions.update(self.schema['alt_definitions'][self._type])
+            del self.schema['alt_definitions']
         self.process_definitions(definitions)
         self.prepare_result()
         self._ready = True
@@ -346,7 +353,7 @@ class Draft4Converter(SchemaConverter):
         set of used types
     """
     def __init__(self, schema, make_copy=True):
-        super().__init__(schema, make_copy)
+        super().__init__(schema, make_copy=make_copy, type_='json')
         self._result: Dict[str, Any] = {
             "$schema": "http://json-schema.org/draft-04/schema#"
         }
@@ -410,6 +417,9 @@ class Mongo36Converter(SchemaConverter):
     This converter maps a type to bsonType wherever possible, and will
     expand definitions on the result.
     """
+    def __init__(self, schema, make_copy=True):
+        super().__init__(schema, make_copy=make_copy, type_='mongodb')
+
     def process_definitions(self, definitions: Dict[str, Any]):
         assert isinstance(definitions, dict)
         src_path = '/definitions/'

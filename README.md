@@ -3,8 +3,8 @@
 ## Problems
 
 [JSON Schema][1] provides a useful way to validate JSON data. However,
-[MongoDB][2] supports only a subset of JSON Schema specification draft
-4. Specifically, [definitions and references are left out][3] (as of 28
+[MongoDB][2] supports only a subset of JSON Schema specification draft 4.
+Specifically, [definitions and references are left out][3] (as of 28
 July 2019). MongoDB 3.2 and 3.4 does not even support JSON Schema, but
 only a [MongoDB-proprietary validation method][4]. Besides, [MongoDB has
 a richer type system than JSON Schema][5]. . . .
@@ -294,6 +294,48 @@ The ‘mongo36’ output would be:
   }
 }
 ```
+
+### Alternative definitions
+
+Sometimes we may want one type to serve very diffent purposes for
+different kinds of outputs. E.g. we may want to use a string in [data
+URI scheme][6] in JSON data input, but also to store the data in a more
+efficient way in the database — MongoDB has a `binData` type
+specifically for this purpose. Therefore, we may want to use separate
+definitions for `json` schema output and `mongodb` schema output. For
+this reason, I have introduced `alt_definitions`. Let us look at an
+example:
+
+```json
+{
+  "alt_definitions": {
+    "json": {
+      "binaryData": {
+        "type": "string",
+        "pattern": "^data:.*?,"
+      }
+    },
+    "mongodb": {
+      "binaryData": {
+        "type": "object",
+        "required": ["media_type", "data"],
+        "additionalProperties": false,
+        "properties": {
+          "media_type": {"type": "string"},
+          "data": {"type": "binData"}
+        }
+      }
+    }
+  }
+}
+```
+
+With these definitions, a `binaryData` type can validate against a
+string like `"data:image/png;base64, …"` as JSON input, but also
+validate against an object containing a `media_type` tag as well as well
+as real binary `data` stored in MongoDB.
+
+[6]: https://en.wikipedia.org/wiki/Data_URI_scheme
 
 ### A last notice
 
