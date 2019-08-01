@@ -157,7 +157,7 @@ class SchemaConverter:
     _type : str
         type of the converter (for alternative definitions)
     """
-    def __init__(self, schema, definitions=None, make_copy=True, type_=None):
+    def __init__(self, schema, definitions=None, type_=None):
         """
         Constructs a SchemaConverter.
 
@@ -167,15 +167,10 @@ class SchemaConverter:
             the input schema
         definitions : Dict[str, Any], optional
             the definitions to use (apart from those in the schema)
-        make_copy : bool, optional
-            whether to make a copy of the schema (as it may be changed)
         type_ : str, optional
             type of the converter (for alternative definitions)
         """
-        if make_copy:
-            self.schema = schema.copy()
-        else:
-            self.schema = schema
+        self.schema = schema.copy()
         self.definitions = {}
         if definitions:
             _merge_definitions(self.definitions, definitions, type_)
@@ -351,9 +346,8 @@ class Draft4Converter(SchemaConverter):
     used_types : Set[str]
         set of used types
     """
-    def __init__(self, schema, definitions, make_copy=True):
-        super().__init__(schema, definitions, make_copy=make_copy,
-                         type_='json')
+    def __init__(self, schema, definitions):
+        super().__init__(schema, definitions, type_='json')
         self._result: Dict[str, Any] = {
             "$schema": "http://json-schema.org/draft-04/schema#"
         }
@@ -416,9 +410,8 @@ class Mongo36Converter(SchemaConverter):
     This converter maps a type to bsonType wherever possible, and will
     expand definitions on the result.
     """
-    def __init__(self, schema, definitions, make_copy=True):
-        super().__init__(schema, definitions, make_copy=make_copy,
-                         type_='mongodb')
+    def __init__(self, schema, definitions):
+        super().__init__(schema, definitions, type_='mongodb')
 
     def process_definitions(self):
         src_path = '/definitions/'
@@ -515,8 +508,7 @@ def convert_schema(in_file: TextIO, out_file: TextIO,
     }
     try:
         # No need to make a copy, as `schema` will be discarded soon.
-        converter = class_table[target_type](schema, definitions,
-                                             make_copy=False)
+        converter = class_table[target_type](schema, definitions)
     except KeyError:
         raise RuntimeError('Unrecognized target type ' + target_type)
     result = converter.result
