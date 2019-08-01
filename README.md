@@ -191,8 +191,8 @@ One major shortcoming of the MongoDB schema validation is that
 definition expansion for the ‘mongo36’ target. Of course, recursive
 types have to be crippled.
 
-My converter has the `geoJson` definition built in. It is defined as
-follows (please notice the recursive definition of `coordinates`):
+Let us take an example of a `geoJson` type definition. It may be defined
+as follows (please notice the recursive definition of `coordinates`):
 
 ```json
 {
@@ -297,7 +297,7 @@ The ‘mongo36’ output would be:
 
 ### Alternative definitions
 
-Sometimes we may want one type to serve very diffent purposes for
+Sometimes we may want one type to serve very different purposes for
 different kinds of outputs. E.g. we may want to use a string in [data
 URI scheme][6] in JSON data input, but also to store the data in a more
 efficient way in the database — MongoDB has a `binData` type
@@ -336,6 +336,13 @@ validate against an object containing a `media_type` tag as well as real
 binary `data` stored in MongoDB.
 
 [6]: https://en.wikipedia.org/wiki/Data_URI_scheme
+
+### Separate definitions
+
+This script now supports providing the definitions file separately from
+the schema, so that it is easier to share common definitions in a
+project. One can use the `-d` command-line option to pass additional
+definitions (this option can be use multiple times).
 
 ### A last notice
 
