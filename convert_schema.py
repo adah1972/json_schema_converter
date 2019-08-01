@@ -416,7 +416,7 @@ class Mongo36Converter(SchemaConverter):
     def process_definitions(self):
         src_path = '/definitions/'
         definitions = self.definitions
-        self.definitions = {}
+        self.definitions: Dict[str, Any] = {}
         for k, v in definitions.items():
             try:
                 self.definitions[k] = self.convert_object(v, src_path + k,
