@@ -321,7 +321,7 @@ class Draft4Converter(SchemaConverter):
     Attributes
     ----------
     type_dependencies : Dict[str, Set[str]]
-        key is the type name, and value is a list of dependent types
+        key is the type name, and value is a set of dependent types
     used_types : Set[str]
         set of used types
     """
@@ -486,7 +486,6 @@ def convert_schema(in_file: TextIO, out_file: TextIO,
         "mongo36": Mongo36Converter,
     }
     try:
-        # No need to make a copy, as `schema` will be discarded soon.
         converter = class_table[target_type](schema, definitions)
     except KeyError:
         raise RuntimeError('Unrecognized target type ' + target_type)
