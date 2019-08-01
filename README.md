@@ -69,13 +69,13 @@ be omitted, as it is the default):
       "required": [
         "$oid"
       ],
-      "additionalProperties": false,
       "properties": {
         "$oid": {
           "type": "string",
           "pattern": "^[0-9A-Fa-f]{24}$"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "type": "object",
@@ -217,7 +217,6 @@ defined as follows (please notice the recursive definition of
         "type",
         "coordinates"
       ],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -233,7 +232,8 @@ defined as follows (please notice the recursive definition of
         "coordinates": {
           "$ref": "#/definitions/coordinates"
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }
@@ -274,7 +274,6 @@ The ‘mongo36’ output would be:
         "type",
         "coordinates"
       ],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "bsonType": "string",
@@ -290,7 +289,8 @@ The ‘mongo36’ output would be:
         "coordinates": {
           "bsonType": "array"
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }
@@ -320,11 +320,11 @@ example:
       "binaryData": {
         "type": "object",
         "required": ["media_type", "data"],
-        "additionalProperties": false,
         "properties": {
           "media_type": {"type": "string"},
           "data": {"type": "binData"}
-        }
+        },
+        "additionalProperties": false
       }
     }
   }
