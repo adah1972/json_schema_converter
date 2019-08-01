@@ -522,7 +522,7 @@ def usage():
     print("""
 Options
   -h, --help              Show this message and exit
-  -d, --def               Specify a definitions file
+  -d, --def DEFINITIONS   Specify a definitions file
   -t, --type TARGET_TYPE  Specify the target type, possible values being
                           draft4 (default), mongo32, and mongo36
 
