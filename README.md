@@ -191,8 +191,9 @@ One major shortcoming of the MongoDB schema validation is that
 definition expansion for the ‘mongo36’ target. Of course, recursive
 types have to be crippled.
 
-Let us take an example of a `geoJson` type definition. It may be defined
-as follows (please notice the recursive definition of `coordinates`):
+Let us take an example of a `geoJsonObject` type definition. It may be
+defined as follows (please notice the recursive definition of
+`coordinates`):
 
 ```json
 {
@@ -210,7 +211,7 @@ as follows (please notice the recursive definition of `coordinates`):
         ]
       }
     },
-    "geoJson": {
+    "geoJsonObject": {
       "type": "object",
       "required": [
         "type",
@@ -244,7 +245,7 @@ If a location was described this way:
 {
   "properties": {
     "location": {
-      "type": "geoJson"
+      "type": "geoJsonObject"
     }
   }
 }
@@ -256,7 +257,7 @@ The ‘draft4’ output would be:
 {
   "properties": {
     "location": {
-      "$ref": "#/definitions/geoJson"
+      "$ref": "#/definitions/geoJsonObject"
     }
   }
 }
