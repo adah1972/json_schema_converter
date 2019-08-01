@@ -510,11 +510,11 @@ def _add_definitions_file(raw_definitions: Dict[str, Any], filename: str):
 
 def _merge_definitions(definitions: Dict[str, Any],
                        raw_definitions: Dict[str, Any], type_: str):
-    if 'definitions' in raw_definitions:
-        definitions.update(raw_definitions['definitions'])
     if 'alt_definitions' in raw_definitions and \
             type_ in raw_definitions['alt_definitions']:
         definitions.update(raw_definitions['alt_definitions'][type_])
+    if 'definitions' in raw_definitions:
+        definitions.update(raw_definitions['definitions'])
 
 
 def usage():
