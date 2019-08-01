@@ -50,67 +50,46 @@ MONGO_BSON_TYPES = [
     'binData',
 ]
 BUILTIN_DEFINITIONS = {
-    "definitions": {
-        "objectId": {
-            "type": "object",
-            "required": ["$oid"],
-            "properties": {
-                "$oid": {
-                    "type": "string",
-                    "pattern": "^[0-9A-Fa-f]{24}$"
-                }
-            },
-            "additionalProperties": False
-        },
-        "date": {
-            "type": "object",
-            "required": ["$date"],
-            "properties": {
-                "$date": {
-                    "type": "string",
-                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
-                               "T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"
-                }
-            },
-            "additionalProperties": False
-        },
-        "binData": {
-            "type": "object",
-            "required": ["$binary", "$type"],
-            "properties": {
-                "$binary": {
-                    "type": "string",
-                    "pattern": "^[=0-9A-Za-z+/]*$"
+    "alt_definitions": {
+        "json": {
+            "binData": {
+                "type": "object",
+                "required": ["$binary", "$type"],
+                "properties": {
+                    "$binary": {
+                        "type": "string",
+                        "pattern": "^[=0-9A-Za-z+/]*$"
+                    },
+                    "$type": {
+                        "type": "string",
+                        "pattern": "^[0-9A-Za-z]{1,2}$"
+                    }
                 },
-                "$type": {
-                    "type": "string",
-                    "pattern": "^[0-9A-Za-z]{1,2}$"
-                }
+                "additionalProperties": False
             },
-            "additionalProperties": False
-        },
-        "coordinates": {
-            "type": "array",
-            "items": {
-                "anyOf": [
-                    {"type": "number"},
-                    {"type": "coordinates"}
-                ]
-            }
-        },
-        "geoJson": {
-            "type": "object",
-            "required": ["type", "coordinates"],
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": ["Point", "MultiPoint",
-                             "LineString", "MultiLineString",
-                             "Polygon", "MultiPolygon"]
+            "date": {
+                "type": "object",
+                "required": ["$date"],
+                "properties": {
+                    "$date": {
+                        "type": "string",
+                        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T"
+                                   "[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"
+                    }
                 },
-                "coordinates": {"type": "coordinates"}
+                "additionalProperties": False
             },
-            "additionalProperties": False
+            "objectId": {
+                "type": "object",
+                "required": ["$oid"],
+                "properties": {
+                    "$oid": {
+                        "type": "string",
+                        "pattern": "^[0-9A-Fa-f]{24}$"
+                    }
+                },
+                "additionalProperties": False
+            },
         }
     }
 }
