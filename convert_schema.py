@@ -322,7 +322,7 @@ class SchemaConverter:
 
         Parameters
         ----------
-        type_ : dict
+        type_ : str
             the type to be converted
         src_path : str
             the slash-separated path of the source JSON
