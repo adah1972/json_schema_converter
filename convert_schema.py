@@ -50,66 +50,68 @@ MONGO_BSON_TYPES = [
     'binData',
 ]
 BUILTIN_DEFINITIONS = {
-    "objectId": {
-        "type": "object",
-        "required": ["$oid"],
-        "properties": {
-            "$oid": {
-                "type": "string",
-                "pattern": "^[0-9A-Fa-f]{24}$"
-            }
-        },
-        "additionalProperties": False
-    },
-    "date": {
-        "type": "object",
-        "required": ["$date"],
-        "properties": {
-            "$date": {
-                "type": "string",
-                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
-                           "T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"
-            }
-        },
-        "additionalProperties": False
-    },
-    "binData": {
-        "type": "object",
-        "required": ["$binary", "$type"],
-        "properties": {
-            "$binary": {
-                "type": "string",
-                "pattern": "^[=0-9A-Za-z+/]*$"
+    "definitions": {
+        "objectId": {
+            "type": "object",
+            "required": ["$oid"],
+            "properties": {
+                "$oid": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Fa-f]{24}$"
+                }
             },
-            "$type": {
-                "type": "string",
-                "pattern": "^[0-9A-Za-z]{1,2}$"
+            "additionalProperties": False
+        },
+        "date": {
+            "type": "object",
+            "required": ["$date"],
+            "properties": {
+                "$date": {
+                    "type": "string",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                               "T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z$"
+                }
+            },
+            "additionalProperties": False
+        },
+        "binData": {
+            "type": "object",
+            "required": ["$binary", "$type"],
+            "properties": {
+                "$binary": {
+                    "type": "string",
+                    "pattern": "^[=0-9A-Za-z+/]*$"
+                },
+                "$type": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Za-z]{1,2}$"
+                }
+            },
+            "additionalProperties": False
+        },
+        "coordinates": {
+            "type": "array",
+            "items": {
+                "anyOf": [
+                    {"type": "number"},
+                    {"type": "coordinates"}
+                ]
             }
         },
-        "additionalProperties": False
-    },
-    "coordinates": {
-        "type": "array",
-        "items": {
-            "anyOf": [
-                {"type": "number"},
-                {"type": "coordinates"}
-            ]
+        "geoJson": {
+            "type": "object",
+            "required": ["type", "coordinates"],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["Point", "MultiPoint",
+                             "LineString", "MultiLineString",
+                             "Polygon", "MultiPolygon"]
+                },
+                "coordinates": {"type": "coordinates"}
+            },
+            "additionalProperties": False
         }
-    },
-    "geoJson": {
-        "type": "object",
-        "required": ["type", "coordinates"],
-        "properties": {
-            "type": {
-                "type": "string",
-                "enum": ["Point", "MultiPoint",
-                         "LineString", "MultiLineString",
-                         "Polygon", "MultiPolygon"]
-            },
-            "coordinates": {"type": "coordinates"}
-        },
-        "additionalProperties": False
     }
 }
 
@@ -147,7 +149,7 @@ class SchemaConverter:
     schema : dict
         the schema to be converted (it might be changed)
     definitions : dict
-        type definitions (both built-in and from the input)
+        type definitions
     _result : dict
         the result after the conversion
     _ready : bool
@@ -155,22 +157,28 @@ class SchemaConverter:
     _type : str
         type of the converter (for alternative definitions)
     """
-    def __init__(self, schema, make_copy=True, type_=None):
+    def __init__(self, schema, definitions=None, make_copy=True, type_=None):
         """
         Constructs a SchemaConverter.
 
         Parameters
         ----------
-        schema : dict
+        schema : Dict[str, Any]
             the input schema
-        make_copy : bool
+        definitions : Dict[str, Any], optional
+            the definitions to use (apart from those in the schema)
+        make_copy : bool, optional
             whether to make a copy of the schema (as it may be changed)
+        type_ : str, optional
+            type of the converter (for alternative definitions)
         """
         if make_copy:
             self.schema = schema.copy()
         else:
             self.schema = schema
-        self.definitions: Dict[str, Any] = {}
+        self.definitions = {}
+        if definitions:
+            _merge_definitions(self.definitions, definitions, type_)
         self._result: Dict[str, Any] = {}
         self._ready = False
         self._type = type_
@@ -195,26 +203,18 @@ class SchemaConverter:
         """
         if self._ready:
             return
-        definitions = BUILTIN_DEFINITIONS.copy()
+        _merge_definitions(self.definitions, self.schema, self._type)
         if 'definitions' in self.schema:
-            definitions.update(self.schema['definitions'])
             del self.schema['definitions']
         if 'alt_definitions' in self.schema:
-            if self._type in self.schema['alt_definitions']:
-                definitions.update(self.schema['alt_definitions'][self._type])
             del self.schema['alt_definitions']
-        self.process_definitions(definitions)
+        self.process_definitions()
         self.prepare_result()
         self._ready = True
 
-    def process_definitions(self, definitions) -> None:
+    def process_definitions(self) -> None:
         """
         Processes the definitions.
-
-        Parameters
-        ----------
-        definitions : Dict[str, Any]
-            the definitions to process
         """
         raise NotImplementedError('process_definitions requires overriding')
 
@@ -351,16 +351,16 @@ class Draft4Converter(SchemaConverter):
     used_types : Set[str]
         set of used types
     """
-    def __init__(self, schema, make_copy=True):
-        super().__init__(schema, make_copy=make_copy, type_='json')
+    def __init__(self, schema, definitions, make_copy=True):
+        super().__init__(schema, definitions, make_copy=make_copy,
+                         type_='json')
         self._result: Dict[str, Any] = {
             "$schema": "http://json-schema.org/draft-04/schema#"
         }
         self.type_dependencies: Dict[str, Set[str]] = {}
         self.used_types = set()
 
-    def process_definitions(self, definitions: Dict[str, Any]):
-        self.definitions = definitions
+    def process_definitions(self):
         self.definitions = self.convert_inner_type(
             self.definitions, '/definitions', ['$definitions'])
 
@@ -416,12 +416,14 @@ class Mongo36Converter(SchemaConverter):
     This converter maps a type to bsonType wherever possible, and will
     expand definitions on the result.
     """
-    def __init__(self, schema, make_copy=True):
-        super().__init__(schema, make_copy=make_copy, type_='mongodb')
+    def __init__(self, schema, definitions, make_copy=True):
+        super().__init__(schema, definitions, make_copy=make_copy,
+                         type_='mongodb')
 
-    def process_definitions(self, definitions: Dict[str, Any]):
-        assert isinstance(definitions, dict)
+    def process_definitions(self):
         src_path = '/definitions/'
+        definitions = self.definitions
+        self.definitions = {}
         for k, v in definitions.items():
             try:
                 self.definitions[k] = self.convert_object(v, src_path + k,
@@ -503,7 +505,8 @@ class Mongo32Converter(Mongo36Converter):
                         v, flattened_result, obj_path + [k])
 
 
-def convert_schema(in_file: TextIO, out_file: TextIO, target_type: str):
+def convert_schema(in_file: TextIO, out_file: TextIO,
+                   definitions: Dict[str, Any], target_type: str):
     schema = json.load(in_file)
     class_table = {
         "draft4": Draft4Converter,
@@ -512,7 +515,8 @@ def convert_schema(in_file: TextIO, out_file: TextIO, target_type: str):
     }
     try:
         # No need to make a copy, as `schema` will be discarded soon.
-        converter = class_table[target_type](schema, make_copy=False)
+        converter = class_table[target_type](schema, definitions,
+                                             make_copy=False)
     except KeyError:
         raise RuntimeError('Unrecognized target type ' + target_type)
     result = converter.result
@@ -520,11 +524,27 @@ def convert_schema(in_file: TextIO, out_file: TextIO, target_type: str):
     print('')
 
 
+def _add_definitions_file(raw_definitions: Dict[str, Any], filename: str):
+    with open(filename, 'r') as f:
+        additional_definitions = json.load(f)
+        raw_definitions.update(additional_definitions)
+
+
+def _merge_definitions(definitions: Dict[str, Any],
+                       raw_definitions: Dict[str, Any], type_: str):
+    if 'definitions' in raw_definitions:
+        definitions.update(raw_definitions['definitions'])
+    if 'alt_definitions' in raw_definitions and \
+            type_ in raw_definitions['alt_definitions']:
+        definitions.update(raw_definitions['alt_definitions'][type_])
+
+
 def usage():
     print('Usage: {} [options] [input file]'.format(sys.argv[0]))
     print("""
 Options
   -h, --help              Show this message and exit
+  -d, --def               Specify a definitions file
   -t, --type TARGET_TYPE  Specify the target type, possible values being
                           draft4 (default), mongo32, and mongo36
 
@@ -534,7 +554,8 @@ When the input file is not provided, stdin is used.
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ht:", ["help", "type="])
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:t:',
+                                   ['help', 'def=', 'type='])
     except getopt.GetoptError as err:
         print(str(err))
         usage()
@@ -544,11 +565,14 @@ def main():
         print('At most one file name can be provided', file=sys.stderr)
         sys.exit(2)
 
+    definitions = BUILTIN_DEFINITIONS.copy()
     target_type = 'draft4'
     for opt, arg in opts:
         if opt in ['-h', '--help']:
             usage()
             sys.exit()
+        elif opt in ['-d', '--def']:
+            _add_definitions_file(definitions, arg)
         elif opt in ['-t', '--type']:
             target_type = arg
 
@@ -558,7 +582,7 @@ def main():
         input_file = sys.stdin
 
     try:
-        convert_schema(input_file, sys.stdout, target_type)
+        convert_schema(input_file, sys.stdout, definitions, target_type)
     except RuntimeError as e:
         print(e, file=sys.stderr)
         sys.exit(1)
