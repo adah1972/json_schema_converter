@@ -518,8 +518,15 @@ def convert_schema(in_file: TextIO, out_file: TextIO,
 
 def _add_definitions_file(raw_definitions: Dict[str, Any], filename: str):
     with open(filename, 'r') as f:
-        additional_definitions = json.load(f)
-        raw_definitions.update(additional_definitions)
+        new_definitions = json.load(f)
+        if 'definitions' in new_definitions:
+            raw_definitions.setdefault('definitions', {}).update(
+                new_definitions['definitions'])
+        if 'alt_definitions' in new_definitions:
+            raw_definitions.setdefault('alt_definitions', {})
+            for type_, defs in new_definitions['alt_definitions'].items():
+                raw_definitions['alt_definitions'].setdefault(type_, {})\
+                    .update(defs)
 
 
 def _merge_definitions(definitions: Dict[str, Any],
