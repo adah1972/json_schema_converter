@@ -458,8 +458,15 @@ class Mongo32Converter(Mongo36Converter):
         stringized_path = '.'.join(obj_path)
         if stringized_path and stringized_path in flattened_result:
             need_exists = True
-            if 'bsonType' in result:
+            # The mongo32 validation method has this behaviour: when
+            # checking the type of an array, the type is that of the
+            # elements of the array.
+            if 'bsonType' in result and result['bsonType'] != 'array':
                 flattened_result[stringized_path]['$type'] = result['bsonType']
+                need_exists = False
+            elif 'items' in result and 'bsonType' in result['items']:
+                flattened_result[stringized_path]['$type'] = \
+                    result['items']['bsonType']
                 need_exists = False
             if 'pattern' in result:
                 flattened_result[stringized_path]['$regex'] = result['pattern']
