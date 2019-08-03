@@ -22,10 +22,11 @@ a richer type system than JSON Schema][5]. . . .
 My decision is that all my schemas should take the same format, but can
 be converted to serve different purposes. I also decide that all types
 should be treated equally, so a custom type will be referenced simply as
-`"type": "MyType"`, instead of `"$ref": "…"` (or `"bsonType": "…"`, as
-MongoDB requires). Apart from that, the input format conforms to JSON
-Schema (draft 4). This will allow people to write simply `"type":
-"objectId"` when the MongoDB BSON type ObjectId is intended.
+`"type": "MyType"`, instead of `"$ref": "…"` (or `"bsonType": "…"`, in
+the case of MongoDB BSON-specific types). Apart from that, the input
+format conforms to JSON Schema (draft 4). This will allow people to
+write simply `"type": "objectId"` when the MongoDB BSON type ObjectId is
+intended.
 
 ### Example
 
@@ -183,6 +184,10 @@ reach its end of life):
   }
 }
 ```
+
+The old MongoDB validation method has the strange behaviour that `$type`
+matches the type of the elements of an array, instead of the array type.
+This is taken account of in the current code.
 
 ### Expanding definitions for ‘mongo36’
 
