@@ -196,8 +196,8 @@ One major shortcoming of the MongoDB schema validation is that
 definition expansion for the ‘mongo36’ target. Of course, recursive
 types have to be crippled.
 
-Let us look at a loose definition of `geoJsonObject`. It may be defined
-as follows (please notice the recursive definition of `coordinates`):
+Let us look at a loose definition of `geoJsonObject` as follows (please
+notice the recursive definition of `coordinates`):
 
 ```json
 {
@@ -336,9 +336,9 @@ binary `data` stored in MongoDB.
 ### Separate definitions
 
 This script now supports providing the definitions file separately from
-the schema, so that it is easier to share common definitions in a
+the schema so that it is easier to share common definitions in a
 project. One can use the `-d` command-line option to pass additional
-definitions (this option can be use multiple times).
+definitions (this option can be repeated).
 
 ### A last notice
 
